@@ -16,17 +16,17 @@ On the other hand, using revalidatePath('/test') results in invalidating the /te
 
 First, add two domains to your local hostname, for example:
 
-`
+```
 127.0.0.1	test1.local
 127.0.0.1	test2.local
-`
+```
 
 hen, execute the build and start commands:
 
-`
+```
 npm run build
 npm run start
-`
+```
 
 Next, open two different tabs and navigate to http://test1.local:3000/test and http://test2.local:3000/test respectively.
 
