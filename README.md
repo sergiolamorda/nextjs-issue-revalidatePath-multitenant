@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+## revalidatePath with middleware doesn't work on multi-tenant project
 
-## Getting Started
+### Explanation
 
-First, run the development server:
+We're working on a multi-tenant project that employs middleware to rewrite requests, converting the host into a slug.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+In Next.js 12, you can perform on-demand revalidation in the API using res.revalidate(), which only invalidates the cache for the domain where the request was made.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+However, after migrating to Next.js 14, we encountered issues when trying to invalidate the cache with revalidatePath; it doesn't seem to work as expected.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Attempting revalidatePath('/domain/test') doesn't take the middleware into account and fails to produce any effect.
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+On the other hand, using revalidatePath('/test') results in invalidating the /test path across all domains.
 
-## Learn More
+### Steps to Reproduce
 
-To learn more about Next.js, take a look at the following resources:
+First, add two domains to your local hostname, for example:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`
+127.0.0.1	test1.local
+127.0.0.1	test2.local
+`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+hen, execute the build and start commands:
 
-## Deploy on Vercel
+`
+npm run build
+npm run start
+`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Next, open two different tabs and navigate to http://test1.local:3000/test and http://test2.local:3000/test respectively.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Now, make a POST request to http://localhost:3000/api/revalidate, which will execute revalidatePath('/test2.local/test'). If you reload the previous tab, the content does not update.
+
+Finally, make a POST request to http://localhost:3000/api/revalidate2, which will execute revalidatePath('/test'). If you reload the previous tabs, both will show updated content.
